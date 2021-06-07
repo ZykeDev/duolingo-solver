@@ -1,2 +1,2 @@
-# duolingo-solver
-Partial Duolingo Solver for failable lessons.
+# Duolingo Solver
+A partial Duolingo Solver for failable lessons.
