@@ -1,23 +1,22 @@
 // ==UserScript==
 // @name         Duolingo Solver
 // @namespace    https://www.duolingo.com/practice
-// @version      0.1
+// @version      0.1.1
 // @description  Automaically solves failable Duolingo lessons.
 // @author       Noya
-// @match        https://*.duolingo.com/practice/
-// @include      https://*.duolingo.com/practice/*
+// @match        *://duolingo.com/*
+// @include      *://*.duolingo.com/*
 // @icon         https://res.cloudinary.com/dn6n8yqqh/image/upload/c_scale,h_214/v1555635245/Icon_qqbnzf.png
 // @website      https://github.com/ZykeDev/duolingo-solver/
-// @require      GM_getResourceText
 // ==/UserScript==
 
 
 // possible [at]match regex /https?:\/\/duolingo\.com\/.*/
 
-
 let dict = {};
 let translationClassname = "_2qRu2";
 let challengeHeader = "challenge-header"
+let practiceURLSubstring = "practice";
 //let loadingDotsClassnames = "_1uYPT _3jIlr f2zGP _18W4a xtPuL";
 
 function getAnswer(question) {
@@ -40,12 +39,16 @@ function getAnswer(question) {
 
 
 function analyzeQuestion() {
-	let question = document.querySelectorAll("[data-test='hint-token']");
+    // TODO switch to "use keyboard"
 
+    // Wait a second
+
+  	//let questionParts = document.querySelectorAll("[data-test='hint-token']");
+    let fullQuestion = document.querySelectorAll("[data-test='hint-sentence']");
+
+    console.log(fullQuestion.length);
     // TODO if question doesnt exist, skip
-
-
-
+/*
 
 	let exists = dict.hasOwnProperty(question);
     alert(question);
@@ -64,29 +67,55 @@ function analyzeQuestion() {
     }
     else {
   	  //getAnswer(question)
-    }
+    }*/
 }
 
 
+
+
+
 function main() {
-    var intervalId = window.setInterval(function(){
+    // Wait for a practice to start
+    let wait = window.setInterval(function() {
+        if (!window.location.href.includes(practiceURLSubstring)) {
+            console.log("waiting");
+        }
+        else {
+            console.log("lesson started");
+            clearInterval(wait);
+            onLessonStart();
+        }
+    }, 1000);
+
+}
+
+function onLessonStart() {
+    // Wait for the lesson to load
+    let intervalId = window.setInterval(function(){
         let headerList = document.querySelectorAll("[data-test='"+ challengeHeader +"']") != null;
 
         if (headerList.length == 0) {
            console.log("loading");
-           alert("loading");
        }
        else {
            console.log("loaded");
-           alert("loaded");
            clearInterval(intervalId);
-           //analyzeQuestion();
+           waitThen(1000, analyzeQuestion);
        }
        headerList = null;
 
     }, 5000);
 
 }
+
+
+function waitThen(ms, callback) {
+    let wait = window.setInterval(function() {
+        clearInterval(wait);
+        callback();
+    }, ms);
+}
+
 
 main();
 
