@@ -1,21 +1,24 @@
 // ==UserScript==
 // @name         Duolingo Solver
-// @namespace    http://tampermonkey.net/
+// @namespace    https://www.duolingo.com/practice
 // @version      0.1
 // @description  Automaically solves failable Duolingo lessons.
 // @author       Noya
-// @match        https://www.duolingo.com
-// @icon         https://www.google.com/s2/favicons?domain=greasyfork.org
-// @grant        none
+// @match        https://*.duolingo.com/practice/
+// @include      https://*.duolingo.com/practice/*
+// @icon         https://res.cloudinary.com/dn6n8yqqh/image/upload/c_scale,h_214/v1555635245/Icon_qqbnzf.png
+// @website      https://github.com/ZykeDev/duolingo-solver/
+// @require      GM_getResourceText
 // ==/UserScript==
 
 
-// possible -match regex /https?:\/\/duolingo\.com\/.*/
+// possible [at]match regex /https?:\/\/duolingo\.com\/.*/
 
 
 let dict = {};
 let translationClassname = "_2qRu2";
-let loadingDotsClassnames = "_1uYPT _3jIlr f2zGP _18W4a xtPuL";
+let challengeHeader = "challenge-header"
+//let loadingDotsClassnames = "_1uYPT _3jIlr f2zGP _18W4a xtPuL";
 
 function getAnswer(question) {
 	// press skip
@@ -67,16 +70,19 @@ function analyzeQuestion() {
 
 function main() {
     var intervalId = window.setInterval(function(){
-       let dots = document.getElementsByClassName(loadingDotsClassnames);
+        let headerList = document.querySelectorAll("[data-test='"+ challengeHeader +"']") != null;
 
-        console.log("loading");
-        if (dots == null || dots == undefined) {
-            console.log("loaded");
-            clearInterval(intervalId);
-            analyzeQuestion();
-        }
-
-        dots = null;
+        if (headerList.length == 0) {
+           console.log("loading");
+           alert("loading");
+       }
+       else {
+           console.log("loaded");
+           alert("loaded");
+           clearInterval(intervalId);
+           //analyzeQuestion();
+       }
+       headerList = null;
 
     }, 5000);
 
