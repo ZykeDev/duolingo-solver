@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Duolingo Solver
 // @namespace    https://www.duolingo.com/practice
-// @version      0.1.1
+// @version      0.1.2
 // @description  Automaically solves failable Duolingo lessons.
 // @author       Noya
 // @match        *://duolingo.com/*
@@ -14,60 +14,64 @@
 // possible [at]match regex /https?:\/\/duolingo\.com\/.*/
 
 let dict = {};
+let answerClassnames = "_1UqAr _1sqiF";
 let translationClassname = "_2qRu2";
 let challengeHeader = "challenge-header"
 let practiceURLSubstring = "practice";
-//let loadingDotsClassnames = "_1uYPT _3jIlr f2zGP _18W4a xtPuL";
 
-function getAnswer(question) {
-	// press skip
-  let skip = document.querySelectorAll("[data-test='player-skip']");
-  skip.click();
+function getAnswerAndNext(question) {
+	// Press skip
+    let skip = document.querySelectorAll("[data-test='player-skip']");
+    skip[0].click();
 
-  // delay
-  setTimeout(() => {
-  	// open the Discuss link in an i-frame?
-    let iframe = null;
+    // Read the answer
+    waitThen(100, () => {
+        let answer = document.querySelectorAll(answerClassnames)[0].innerText;
+        dict[question] = answer;
 
-  	// copy the answer
-    let answer = iframe.contentWindow.document.getElementsByClassName(translationClassname).innerText;
+        // Go to the next question
+        let next = document.querySelectorAll("[data-test='player-next']");
+        next[0].click();
+    });
 
-  	// save it to a dictionary (Q - A)
-    dict[question] = answer;
-  }, 100)
 }
 
 
 function analyzeQuestion() {
     // TODO switch to "use keyboard"
 
-    // Wait a second
+    // Read the question
+  	let questionParts = document.querySelectorAll("[data-test='hint-token']");
 
-  	//let questionParts = document.querySelectorAll("[data-test='hint-token']");
-    let fullQuestion = document.querySelectorAll("[data-test='hint-sentence']");
+    if (questionParts.length == 0) {
+        console.log("question not found");
+        return;
+    }
 
-    console.log(fullQuestion.length);
-    // TODO if question doesnt exist, skip
-/*
+    let question = "";
 
-	let exists = dict.hasOwnProperty(question);
-    alert(question);
+    for(let i = 0; i < questionParts.length; i++) {
+        question += questionParts[i].innerText;
+    }
 
-	if (exists) {
-  	   // paste A into the textarea
-       var textarea = document.getElementsByClassName("textarea");
-       textarea.value = dict[question];
+    if (question == "") { return; }
 
-       // press check
-       let check = document.querySelectorAll("[data-test='player-next']");
-       check.click();
+    // Check if the question is already in the dictionary
+    let qexists = dict.hasOwnProperty(question);
 
-       // if its wrong, substitute answer
-       // needs a delay time
+    if (qexists) {
+        // Paste the answer into the textarea
+        let textarea = document.getElementsByClassName("textarea");
+        textarea[0].value = dict[question];
+
+        // Go to the next question
+        let check = document.querySelectorAll("[data-test='player-next']");
+        check[0].click();
     }
     else {
-  	  //getAnswer(question)
-    }*/
+        // If we don't know the answer yet, read it and add it to the dictionary
+        let answer = getAnswerAndNext(question);
+    }
 }
 
 
@@ -76,7 +80,7 @@ function analyzeQuestion() {
 
 function main() {
     // Wait for a practice to start
-    let wait = window.setInterval(function() {
+    let wait = window.setInterval(() => {
         if (!window.location.href.includes(practiceURLSubstring)) {
             console.log("waiting");
         }
@@ -91,7 +95,7 @@ function main() {
 
 function onLessonStart() {
     // Wait for the lesson to load
-    let intervalId = window.setInterval(function(){
+    let intervalId = window.setInterval(() => {
         let headerList = document.querySelectorAll("[data-test='"+ challengeHeader +"']") != null;
 
         if (headerList.length == 0) {
@@ -100,7 +104,7 @@ function onLessonStart() {
        else {
            console.log("loaded");
            clearInterval(intervalId);
-           waitThen(1000, analyzeQuestion);
+           waitThen(2000, analyzeQuestion);
        }
        headerList = null;
 
@@ -110,7 +114,7 @@ function onLessonStart() {
 
 
 function waitThen(ms, callback) {
-    let wait = window.setInterval(function() {
+    let wait = window.setInterval(() => {
         clearInterval(wait);
         callback();
     }, ms);
